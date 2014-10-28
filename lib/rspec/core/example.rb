@@ -278,7 +278,7 @@ module RSpec
 
       # @private
       def around_example_hooks
-        @around_example_hooks ||= example_group.hooks.around_example_hooks_for(self)
+        @around_example_hooks ||= hooks.around_example_hooks_for(self)
       end
 
       # @private
@@ -340,11 +340,15 @@ module RSpec
 
     private
 
+      def hooks
+        example_group_instance.singleton_class.hooks
+      end
+
       def with_around_example_hooks(&block)
         if around_example_hooks.empty?
           yield
         else
-          @example_group_class.hooks.run(:around, :example, self, Procsy.new(self, &block))
+          hooks.run(:around, :example, self, Procsy.new(self, &block))
         end
       rescue Exception => e
         set_exception(e, "in an `around(:example)` hook")
@@ -381,12 +385,12 @@ module RSpec
 
       def run_before_example
         @example_group_instance.setup_mocks_for_rspec
-        @example_group_class.hooks.run(:before, :example, self)
+        hooks.run(:before, :example, self)
       end
 
       def run_after_example
         assign_generated_description if RSpec.configuration.expecting_with_rspec?
-        @example_group_class.hooks.run(:after, :example, self)
+        hooks.run(:after, :example, self)
         verify_mocks
       ensure
         @example_group_instance.teardown_mocks_for_rspec
